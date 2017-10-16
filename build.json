@@ -1,0 +1,9 @@
+{
+	"id": "better_cron",
+	"version": "1.0",
+	"description": "Better Cronjobs for UliCMS",
+	"categories": [
+		"development"
+	],
+	"compatible_from": "2017.4"
+}
