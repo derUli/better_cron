@@ -1,4 +1,4 @@
-# better_cron
+# Better Cron
 
 Better Cronjobs for UliCMS.
 Provides methods to run a function in a regular time interval (e.g. every 4 hours).
@@ -9,7 +9,7 @@ The second argument is a timespan as integer (e.g. 14).
 The third argument musst be an anonymous function or a string containing a function name.
 To run a public controller function enter the name like "MyController::myFunction".
 
-##example
+## Example
 
 ```php
 <?php
