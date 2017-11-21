@@ -3,7 +3,7 @@
 Better Cronjobs for UliCMS.
 Provides methods to run a function in a regular time interval (e.g. every 4 hours).
 
-It's best to call BetterCron in the "cron" Hook.
+It's best practice to call BetterCron in the "cron" Hook.
 The first argument of all methods is an identifier for the Cronjob which must be unique.
 The second argument is a timespan as integer (e.g. 14).
 The third argument musst be an anonymous function or a string containing a function name.
