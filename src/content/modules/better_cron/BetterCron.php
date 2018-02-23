@@ -89,6 +89,31 @@ values(?, ?)", array(
         }
     }
 
+    public static function getAllCronjobs()
+    {
+        $cronjobs = array();
+        $query = Database::query("select name, last_run from `{prefix}cronjobs` order by name", true);
+        while ($row = Database::fetchObject($query)) {
+            $cronjobs[$row->name] = $row->last_run;
+        }
+        return $cronjobs;
+    }
+
+    public function settings()
+    {
+        return Template::executeModuleTemplate("better_cron", "list.php");
+    }
+
+    public function getSettingsLinkText()
+    {
+        return get_translation("view");
+    }
+
+    public function getSettingsHeadline()
+    {
+        return get_translation("cronjobs");
+    }
+
     public function uninstall()
     {
         $migrator = new DBMigrator("package/better_cron", ModuleHelper::buildRessourcePath("better_cron", "sql/down"));
