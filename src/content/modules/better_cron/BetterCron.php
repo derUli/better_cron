@@ -1,113 +1,168 @@
 <?php
 
+declare(strict_types=1);
+
+// This module provides methods to run functions in a regular interval
 class BetterCron extends MainClass {
 
-    public function afterHtml() {
+    public function afterHtml(): void {
         do_event("register_cronjobs");
     }
 
-    public static function seconds($job, $seconds, $callback) {
+    // Run a method every X seconds
+    public static function seconds(string $job, int $seconds, $callback): void {
+        // When was the last run of this job?
         $currentTime = time();
         $last_run = self::getLastRun($job);
-        if ($currentTime - $last_run >= $seconds) {
-            if (is_string($callback)) {
+
+        // Is the time range between the last run and now larger or equal to
+        // $seconds?
+        // If not then abort here.
+        if ($currentTime - $last_run < $seconds) {
+            return;
+        }
+        if (is_string($callback)) {
+            // update last run for this job before running it
+            // to prevent running the job multiple at the same time
+            self::updateLastRun($job);
+            // Callback can be a controller method name as string
+            // e.g. MyController::myMethod
+            if (str_contains("::", $callback)) {
+                $this->executeControllerCallback($callback);
+            } else {
+                // if $callback is a string without ::
+                // then it is a normal (non controller) method name
                 self::updateLastRun($job);
-                if (str_contains("::", $callback)) {
-                    $callback = explode("::", $callback);
-                    $sClass = $callback[0];
-                    $sMethod = $callback[1];
-                    if (ControllerRegistry::get($sClass) && method_exists(ControllerRegistry::get($sClass), $sMethod)) {
-                        ControllerRegistry::get($sClass)->$sMethod();
-                    }
-                } else {
-                    self::updateLastRun($job);
-                    call_user_func($callback);
-                }
-            } else if (is_callable($callback)) {
-                self::updateLastRun($job);
-                $callback();
+                call_user_func($callback);
             }
+        } else if (is_callable($callback)) {
+            // if $callback is a callbable function then execute it
+            self::updateLastRun($job);
+            $callback();
         }
     }
 
-    public static function minutes($job, $minutes, $callback) {
+    // parse a string in the format MyController::myMethod and call
+    // a controller action (if it exists)
+    protected static function executeControllerCallback(string $callback): void {
+        $args = explode("::", $callback);
+        $sClass = $args[0];
+        $sMethod = $args[1];
+        // If this method exists, execute it
+        // FIXME: if the job doesn't exists log an error
+        if (ControllerRegistry::get($sClass) and
+                method_exists(ControllerRegistry::get($sClass), $sMethod)) {
+            ControllerRegistry::get($sClass)->$sMethod();
+        }
+    }
+
+    // Run a method every X minutes
+    public static function minutes(string $job, int $minutes, $callback): void {
         self::seconds($job, $minutes * 60, $callback);
     }
 
-    public static function hours($job, $hours, $callback) {
+    // Run a method every X hours
+    public static function hours(string $job, int $hours, $callback): void {
         self::seconds($job, $hours * 60 * 60, $callback);
     }
 
-    public static function days($job, $days, $callback) {
+    // Run a method every X days
+    public static function days(string $job, int $days, $callback): void {
         self::seconds($job, $days * 60 * 60 * 24, $callback);
     }
 
-    public static function weeks($job, $weeks, $callback) {
+    // Run a method every X weeks
+    public static function weeks(string $job, int $weeks, $callback): void {
         self::seconds($job, $weeks * 60 * 60 * 24 * 7, $callback);
     }
 
-    public static function months($job, $months, $callback) {
+    // Run a method every X months
+    public static function months(string $job, int $months, $callback): void {
         self::seconds($job, $months * 60 * 60 * 24 * 7 * 30, $callback);
     }
 
-    public static function years($job, $years, $callback) {
+    // Run a method every X years
+    public static function years(string $job, int $years, $callback): void {
         self::seconds($job, $years * 60 * 60 * 24 * 7 * 30 * 365, $callback);
     }
 
-    private static function getLastRun($name) {
+    // returns the timestamp when did a job run the last time
+    // if not run yet return 0 (year 1970)
+    private static function getLastRun($name): int {
         $last_run = 0;
 
-        $query = Database::pQuery("select last_run from `{prefix}cronjobs` where name = ?", array(
-                    $name
-                        ), true);
+        $query = Database::pQuery(
+                        "select last_run from `{prefix}cronjobs` where name = ?",
+                        [
+                            $name
+                        ],
+                        true);
         if (Database::any($query)) {
             $result = Database::fetchObject($query);
-            $last_run = $result->last_run;
+            $last_run = intval($result->last_run);
         }
         return $last_run;
     }
 
-    private static function updateLastRun($name) {
-        $query = Database::pQuery("select name from `{prefix}cronjobs` where name = ?", array(
-                    $name
-                        ), true);
+    // update the last run date of a cronjob
+    private static function updateLastRun(string $name): void {
+        // if this job exists update in database do an sql update else
+        // an sql insert
+        $query = Database::pQuery(
+                        "select name from `{prefix}cronjobs` where name = ?",
+                        [
+                            $name
+                        ],
+                        true);
         if (Database::any($query)) {
-            Database::pQuery("update `{prefix}cronjobs` set last_run = ? where name = ?", array(
-                time(),
-                $name
-                    ), true);
+            Database::pQuery(
+                    "update `{prefix}cronjobs` set last_run = ? where name = ?",
+                    [
+                        time(),
+                        $name
+                    ],
+                    true);
         } else {
-            Database::pQuery("insert into `{prefix}cronjobs` (name, last_run)
-values(?, ?)", array(
-                $name,
-                time()
-                    ), true);
+            Database::pQuery(
+                    "insert into `{prefix}cronjobs` (name, last_run) "
+                    . "values(?, ?)",
+                    [
+                        $name,
+                        time()
+                    ],
+                    true);
         }
     }
 
-    public static function getAllCronjobs() {
+    // get all cronjobs in database as array of
+    // name => timestamp
+    public static function getAllCronjobs(): array {
         $cronjobs = array();
-        $query = Database::query("select name, last_run from `{prefix}cronjobs` order by name", true);
+        $query = Database::query(
+                        "select name, last_run from `{prefix}cronjobs` "
+                        . "order by name",
+                        true
+        );
         while ($row = Database::fetchObject($query)) {
-            $cronjobs[$row->name] = $row->last_run;
+            $cronjobs[$row->name] = intval($row->last_run);
         }
         return $cronjobs;
     }
 
-    public function settings() {
+    // Settins page
+    public function settings(): string {
         return Template::executeModuleTemplate("better_cron", "list.php");
     }
 
-    public function getSettingsLinkText() {
-        return get_translation("view");
-    }
-
-    public function getSettingsHeadline() {
+    public function getSettingsHeadline(): string {
         return get_translation("cronjobs");
     }
 
-    public function uninstall() {
-        $migrator = new DBMigrator("package/better_cron", ModuleHelper::buildRessourcePath("better_cron", "sql/down"));
+    public function uninstall(): void {
+        $migrator = new DBMigrator(
+                "package/better_cron",
+                ModuleHelper::buildRessourcePath("better_cron", "sql/down")
+        );
         $migrator->rollback();
     }
 
