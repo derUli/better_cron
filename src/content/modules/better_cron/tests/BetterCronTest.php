@@ -42,6 +42,14 @@ class BetterCronTest extends TestCase {
     public function testTableExists() {
         $this->assertTrue(Database::tableExists("cronjobs"));
     }
+    public function testAfterHTML(){
+        $this->assertFalse(defined("CRONJOBS_REGISTERED"));
+        
+        $controller = new BetterCron();
+        $controller->afterHtml();
+        
+        $this->assertTrue(defined("CRONJOBS_REGISTERED"));
+    }
 
     public function testSeconds() {
         $this->doTest("seconds");

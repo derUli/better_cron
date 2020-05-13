@@ -224,4 +224,9 @@ class BetterCron extends MainClass {
         }
     }
 
+    public function registerCronjobs() {
+        if(isCLI()){
+            idefine("CRONJOBS_REGISTERED", true);
+        }
+    }
 }
