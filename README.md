@@ -38,5 +38,10 @@ BetterCron::months("module/my_module/job5", 3, function () {
 BetterCron::years("module/my_module/job6", 5, function () {
     // Do Something
 });
+
+// run a function every 20 years
+BetterCron::decades("module/my_module/job7", 2, function () {
+    // Do Something
+});
 ?>
 ```
