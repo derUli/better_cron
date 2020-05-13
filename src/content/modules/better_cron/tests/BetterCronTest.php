@@ -139,6 +139,49 @@ class BetterCronTest extends TestCase {
         $this->assertGreaterThanOrEqual(2020, intval(ob_get_clean()));
     }
 
+    public function testWithNonExistingControllerMethodThrowsException() {
+        $testIdentifier = "phpunit/" . uniqid();
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage(
+                "Callback method NoController::noMethod for the job $testIdentifier doesn't exist"
+        );
+
+        $this->callBetterCron(
+                $testIdentifier,
+                TimeUnit::SECONDS,
+                "NoController::noMethod"
+        );
+    }
+
+    public function testWithNonExistingMethodThrowsException() {
+        $testIdentifier = "phpunit/" . uniqid();
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage(
+                "Callback method no_method for the job $testIdentifier doesn't exist"
+        );
+
+        $this->callBetterCron(
+                $testIdentifier,
+                TimeUnit::SECONDS,
+                "no_method"
+        );
+    }
+
+    public function testWithNotCallableArgumentThrowsException() {
+        $testIdentifier = "phpunit/" . uniqid();
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage(
+                "Callback of job $testIdentifier is not callable"
+        );
+        $this->callBetterCron(
+                $testIdentifier,
+                TimeUnit::SECONDS,
+                123
+        );
+    }
+
     protected function doTest($unit) {
         $testIdentifier = "phpunit/" . uniqid();
 

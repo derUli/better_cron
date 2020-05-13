@@ -13,6 +13,12 @@ class BetterCron extends MainClass {
 
     // Run a method every X seconds
     public static function seconds(string $job, int $seconds, $callback): void {
+        if (!is_string($callback) && !is_callable($callback)) {
+            throw new BadMethodCallException(
+                    "Callback of job $job is not callable"
+            );
+        }
+
         // When was the last run of this job?
         $currentTime = time();
         $last_run = self::getLastRun($job);
@@ -23,20 +29,14 @@ class BetterCron extends MainClass {
         if ($currentTime - $last_run < $seconds) {
             return;
         }
+
+        // Callback can be a controller method name as string
+        // e.g. MyController::myMethod
         if (is_string($callback)) {
-            // update last run for this job before running it
-            // to prevent running the job multiple at the same time
+            // if $callback is a string without ::
+            // then it is a normal (non controller) method name
             self::updateLastRun($job);
-            // Callback can be a controller method name as string
-            // e.g. MyController::myMethod
-            if (str_contains("::", $callback)) {
-                self::executeControllerCallback($callback);
-            } else {
-                // if $callback is a string without ::
-                // then it is a normal (non controller) method name
-                self::updateLastRun($job);
-                call_user_func($callback);
-            }
+            self::executeStringCallback($callback, $job);
         } else if (is_callable($callback)) {
             // if $callback is a callbable function then execute it
             self::updateLastRun($job);
@@ -44,9 +44,34 @@ class BetterCron extends MainClass {
         }
     }
 
+    protected static function executeStringCallback(string $callback, $job) {
+        // Callback can be a controller method name as string
+        // e.g. MyController::myMethod
+        if (str_contains("::", $callback)) {
+            self::executeControllerCallback($callback, $job);
+        } else {
+            // if $callback is a string without ::
+            // then it is a normal (non controller) method name
+            self::executeCallbackFunction($callback, $job);
+        }
+    }
+
+    protected static function executeCallbackFunction(string $callback, string $job): void {
+        if (function_exists($callback)) {
+            // update last run for this job before running it
+            // to prevent running the job multiple at the same time
+            self::updateLastRun($job);
+            call_user_func($callback);
+        } else {
+            throw new BadMethodCallException(
+                    "Callback method $callback for the job $job doesn't exist"
+            );
+        }
+    }
+
     // parse a string in the format MyController::myMethod and call
     // a controller action (if it exists)
-    protected static function executeControllerCallback(string $callback): void {
+    protected static function executeControllerCallback(string $callback, string $job): void {
         $args = explode("::", $callback);
         $sClass = $args[0];
         $sMethod = $args[1];
@@ -55,6 +80,10 @@ class BetterCron extends MainClass {
         if (ControllerRegistry::get($sClass) and
                 method_exists(ControllerRegistry::get($sClass), $sMethod)) {
             ControllerRegistry::get($sClass)->$sMethod();
+        } else {
+            throw new BadMethodCallException(
+                    "Callback method $callback for the job $job doesn't exist"
+            );
         }
     }
 
