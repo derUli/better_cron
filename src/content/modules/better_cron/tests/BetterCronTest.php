@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use function UliCMS\HTML\stringContainsHtml;
+use function UliCMS\Utils\ConvertToSeconds\convertToSeconds;
+use UliCMS\Utils\ConvertToSeconds\TimeUnit;
 
 class BetterCronTest extends TestCase {
 
@@ -42,17 +44,18 @@ class BetterCronTest extends TestCase {
     public function testTableExists() {
         $this->assertTrue(Database::tableExists("cronjobs"));
     }
-    public function testAfterHTML(){
+
+    public function testAfterHTML() {
         $this->assertFalse(defined("CRONJOBS_REGISTERED"));
-        
+
         $controller = new BetterCron();
         $controller->afterHtml();
-        
+
         $this->assertTrue(defined("CRONJOBS_REGISTERED"));
     }
 
     public function testSeconds() {
-        $this->doTest("seconds");
+        $this->doTest(TimeUnit::SECONDS);
     }
 
     public function testMinutes() {
@@ -60,7 +63,7 @@ class BetterCronTest extends TestCase {
             $this->markTestSkipped('Skipped because of BETTER_CRON_TEST_LEVEL');
             return;
         }
-        $this->doTest("minutes");
+        $this->doTest(TimeUnit::MINUTES);
     }
 
     public function testHours() {
@@ -69,7 +72,7 @@ class BetterCronTest extends TestCase {
             return;
         }
 
-        $this->doTest("hours");
+        $this->doTest(TimeUnit::HOURS);
     }
 
     public function testDays() {
@@ -77,7 +80,7 @@ class BetterCronTest extends TestCase {
             $this->markTestSkipped('Skipped because of BETTER_CRON_TEST_LEVEL');
             return;
         }
-        $this->doTest("days");
+        $this->doTest(TimeUnit::DAYS);
     }
 
     public function testWeeks() {
@@ -85,7 +88,7 @@ class BetterCronTest extends TestCase {
             $this->markTestSkipped('Skipped because of BETTER_CRON_TEST_LEVEL');
             return;
         }
-        $this->doTest("weeks");
+        $this->doTest(TimeUnit::WEEKS);
     }
 
     public function testMonths() {
@@ -93,7 +96,7 @@ class BetterCronTest extends TestCase {
             $this->markTestSkipped('Skipped because of BETTER_CRON_TEST_LEVEL');
             return;
         }
-        $this->doTest("months");
+        $this->doTest(TimeUnit::MONTHS);
     }
 
     public function testYears() {
@@ -101,7 +104,7 @@ class BetterCronTest extends TestCase {
             $this->markTestSkipped('Skipped because of BETTER_CRON_TEST_LEVEL');
             return;
         }
-        $this->doTest("years");
+        $this->doTest(TimeUnit::YEARS);
     }
 
     public function testDecades() {
@@ -109,7 +112,7 @@ class BetterCronTest extends TestCase {
             $this->markTestSkipped('Skipped because of BETTER_CRON_TEST_LEVEL');
             return;
         }
-        $this->doTest("decades");
+        $this->doTest(TimeUnit::DECADES);
     }
 
     public function testWithControllerCallback() {
@@ -118,7 +121,7 @@ class BetterCronTest extends TestCase {
         ob_start();
         $this->callBetterCron(
                 $testIdentifier,
-                "seconds",
+                TimeUnit::SECONDS,
                 "BetterCron::testCallback"
         );
         $this->assertEquals("foo", ob_get_clean());
@@ -129,7 +132,7 @@ class BetterCronTest extends TestCase {
         ob_start();
         $this->callBetterCron(
                 $testIdentifier,
-                "seconds",
+                TimeUnit::SECONDS,
                 "year"
         );
 
@@ -149,7 +152,7 @@ class BetterCronTest extends TestCase {
         $allJobs1 = BetterCron::getAllCronjobs();
         $this->assertGreaterThan(time() - 10, $allJobs1[$testIdentifier]);
 
-        sleep(BetterCron::calculateSeconds($unit == 'seconds' ? 2 : 1, $unit));
+        sleep(convertToSeconds($unit == TimeUnit::SECONDS ? 2 : 1, $unit));
 
         ob_start();
         $this->callBetterCron($testIdentifier, $unit, function() {
@@ -162,8 +165,8 @@ class BetterCronTest extends TestCase {
         $this->assertEquals($allJobs2[$testIdentifier], $allJobs2[$testIdentifier]);
 
         sleep(
-                BetterCron::calculateSeconds(
-                        $unit == 'seconds' ? 5 : 1,
+                convertToSeconds(
+                        $unit == TimeUnit::SECONDS ? 5 : 1,
                         $unit
                 )
         );
@@ -191,33 +194,9 @@ class BetterCronTest extends TestCase {
         call_user_func(
                 $methodName,
                 $name,
-                $unit == 'seconds' ? 5 : 2,
+                $unit == TimeUnit::SECONDS ? 5 : 2,
                 $callable
         );
-    }
-
-    public function testConvert() {
-        $units = [
-            "seconds" => 1,
-            "minutes" => 60,
-            "hours" => 3600,
-            "days" => 86400,
-            "weeks" => 604800,
-            "months" => 2592000,
-            "years" => 31536000,
-            "decades" => 315360000
-        ];
-
-        foreach ($units as $unit => $expectedSeconds) {
-            $this->assertEquals(
-                    $expectedSeconds,
-                    BetterCron::calculateSeconds(
-                            1,
-                            $unit
-                    ),
-                    "1 $unit is not $expectedSeconds seconds"
-            );
-        }
     }
 
     public function testGetSettingsHeadline() {

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use function UliCMS\Utils\ConvertToSeconds\convertToSeconds;
+
 // This module provides methods to run functions in a regular interval
 class BetterCron extends MainClass {
 
@@ -60,7 +62,7 @@ class BetterCron extends MainClass {
     public static function minutes(string $job, int $minutes, $callback): void {
         self::seconds(
                 $job,
-                self::calculateSeconds($minutes, "minutes"),
+                convertToSeconds($minutes, "minutes"),
                 $callback
         );
     }
@@ -69,7 +71,7 @@ class BetterCron extends MainClass {
     public static function hours(string $job, int $hours, $callback): void {
         self::seconds(
                 $job,
-                self::calculateSeconds($hours, "hours"),
+                convertToSeconds($hours, "hours"),
                 $callback
         );
     }
@@ -78,7 +80,7 @@ class BetterCron extends MainClass {
     public static function days(string $job, int $hours, $callback): void {
         self::seconds(
                 $job,
-                self::calculateSeconds($hours, "days"),
+                convertToSeconds($hours, "days"),
                 $callback
         );
     }
@@ -87,7 +89,7 @@ class BetterCron extends MainClass {
     public static function weeks(string $job, int $weeks, $callback): void {
         self::seconds(
                 $job,
-                self::calculateSeconds($weeks, "weeks"),
+                convertToSeconds($weeks, "weeks"),
                 $callback
         );
     }
@@ -96,7 +98,7 @@ class BetterCron extends MainClass {
     public static function months(string $job, int $months, $callback): void {
         self::seconds(
                 $job,
-                self::calculateSeconds($months, "months"),
+                convertToSeconds($months, "months"),
                 $callback
         );
     }
@@ -105,7 +107,7 @@ class BetterCron extends MainClass {
     public static function years(string $job, int $years, $callback): void {
         self::seconds(
                 $job,
-                self::calculateSeconds($years, "years"),
+                convertToSeconds($years, "years"),
                 $callback
         );
     }
@@ -113,31 +115,9 @@ class BetterCron extends MainClass {
     public static function decades(string $job, int $decades, $callback): void {
         self::seconds(
                 $job,
-                self::calculateSeconds($decades, "decades"),
+                convertToSeconds($decades, "decades"),
                 $callback
         );
-    }
-
-    // calculate a time in a given unit in seconds
-    public static function calculateSeconds(int $timespan, string $unit): int {
-        switch ($unit) {
-            case 'minutes':
-                return $timespan * 60;
-            case 'hours':
-                return $timespan * 60 * 60;
-            case 'days':
-                return $timespan * 60 * 60 * 24;
-            case 'weeks':
-                return $timespan * 60 * 60 * 24 * 7;
-            case 'months':
-                return $timespan * 60 * 60 * 24 * 30;
-            case 'years':
-                return $timespan * 60 * 60 * 24 * 365;
-            case 'decades':
-                return $timespan * 60 * 60 * 24 * 365 * 10;
-            default:
-                return $timespan;
-        }
     }
 
     // returns the timestamp when did a job run the last time
@@ -225,8 +205,9 @@ class BetterCron extends MainClass {
     }
 
     public function registerCronjobs() {
-        if(isCLI()){
+        if (isCLI()) {
             idefine("CRONJOBS_REGISTERED", true);
         }
     }
+
 }

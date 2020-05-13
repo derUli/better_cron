@@ -9,5 +9,8 @@
     "custom_acl": [
         "better_cron_list"
     ],
-    "admin_permission": "better_cron_list"
+    "admin_permission": "better_cron_list",
+    "dependencies": [
+        "convert_to_seconds"
+    ]
 }
