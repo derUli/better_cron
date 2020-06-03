@@ -47,7 +47,7 @@ class BetterCron extends MainClass {
     protected static function executeStringCallback(string $callback, $job) {
         // Callback can be a controller method name as string
         // e.g. MyController::myMethod
-        if (str_contains("::", $callback)) {
+        if (str_contains($callback, "::")) {
             self::executeControllerCallback($callback, $job);
         } else {
             // if $callback is a string without ::
