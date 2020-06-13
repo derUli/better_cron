@@ -7,6 +7,8 @@ use function UliCMS\Utils\ConvertToSeconds\convertToSeconds;
 // This module provides methods to run functions in a regular interval
 class BetterCron extends MainClass {
 
+    public static $currentTime = null;
+
     public function afterHtml(): void {
         do_event("register_cronjobs");
     }
@@ -20,7 +22,7 @@ class BetterCron extends MainClass {
         }
 
         // When was the last run of this job?
-        $currentTime = time();
+        $currentTime = self::$currentTime ?? time();
         $last_run = self::getLastRun($job);
 
         // Is the time range between the last run and now larger or equal to
@@ -168,17 +170,19 @@ class BetterCron extends MainClass {
     }
 
     // update the last run date of a cronjob
-    private static function updateLastRun(string $name): void {
+    public static function updateLastRun(string $name): void {
         // if this job exists update in database do an sql update else
         // an sql insert
         $query = Database::selectAll("cronjobs", ["name"], "name = ?", [$name]);
 
+        $currentTime = is_numeric(self::$currentTime) ? self::$currentTime : null;
+
         $args = Database::any($query) ? [
-            time(),
+           $currentTime,
             $name
                 ] : [
             $name,
-            time()
+            $currentTime
         ];
         $sql = Database::any($query) ?
                 "update `{prefix}cronjobs` set last_run = ? where name = ?" :
