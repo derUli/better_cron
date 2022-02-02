@@ -1,12 +1,12 @@
 {
 	"id": "better_cron",
-	"version": "1.4",
+	"version": "1.5",
 	"description": "Better Cronjobs for UliCMS",
 	"categories": [
 		"development"
 	],
-	"compatible_from": "2019.2",
-	"min_php_version": "7.2",
+	"compatible_from": "2022.2",
+	"min_php_version": "8.1",
 	"dependencies": [
 		"convert_to_seconds"
 	]

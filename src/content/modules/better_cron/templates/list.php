@@ -12,7 +12,7 @@ $cronjobs = BetterCron::getAllCronjobs();
         <?php foreach ($cronjobs as $name => $last_run) { ?>
             <tr>
                 <td><?php esc($name); ?></td>
-                <td><?php esc(strftime("%x %X", $last_run)); ?></td>
+                <td><?php esc(PHP81_BC\strftime("%x %X", $last_run)); ?></td>
             </tr>
         <?php } ?>
     </tbody>
