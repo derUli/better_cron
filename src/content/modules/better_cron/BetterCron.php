@@ -2,24 +2,42 @@
 
 declare(strict_types=1);
 
-use function UliCMS\Utils\ConvertToSeconds\convertToSeconds;
+defined('ULICMS_ROOT') || exit('No direct script access allowed');
 
-// This module provides methods to run functions in a regular interval
-class BetterCron extends MainClass
-{
-    public static $currentTime = null;
+use App\Controllers\MainClass;
+use App\Database\DBMigrator;
+use App\Helpers\ModuleHelper;
+use content\modules\convert_to_seconds\ConvertToSeconds;
+use content\modules\convert_to_seconds\TimeUnit;
 
-    public function afterHtml(): void
-    {
-        do_event("register_cronjobs");
+/**
+ * Provides utils to execute methods in an interval
+ */
+class BetterCron extends MainClass {
+    public static ?int $currentTime = null;
+
+    /**
+     * Register cronjobs after HTML output
+     *
+     * @return void
+     */
+    public function afterHtml(): void {
+        do_event('register_cronjobs');
     }
 
-    // Run a method every X seconds
-    public static function seconds(string $job, int $seconds, $callback): void
-    {
-        if (!is_string($callback) && !is_callable($callback)) {
+    /**
+     * Run a method any X seconds
+     *
+     * @param string $job
+     * @param int $seconds
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function seconds(string $job, int $seconds, mixed $callback): void {
+        if (! is_string($callback) && ! is_callable($callback)) {
             throw new BadMethodCallException(
-                "Callback of job $job is not callable"
+                "Callback of job {$job} is not callable"
             );
         }
 
@@ -48,147 +66,136 @@ class BetterCron extends MainClass
         }
     }
 
-    protected static function executeStringCallback(string $callback, $job)
-    {
-        // Callback can be a controller method name as string
-        // e.g. MyController::myMethod
-        if (str_contains($callback, "::")) {
-            self::executeControllerCallback($callback, $job);
-        } else {
-            // if $callback is a string without ::
-            // then it is a normal (non controller) method name
-            self::executeCallbackFunction($callback, $job);
-        }
-    }
-
-    protected static function executeCallbackFunction(string $callback, string $job): void
-    {
-        if (function_exists($callback)) {
-            // update last run for this job before running it
-            // to prevent running the job multiple at the same time
-            self::updateLastRun($job);
-            call_user_func($callback);
-        } else {
-            throw new BadMethodCallException(
-                "Callback method $callback for the job $job doesn't exist"
-            );
-        }
-    }
-
-    // parse a string in the format MyController::myMethod and call
-    // a controller action (if it exists)
-    protected static function executeControllerCallback(string $callback, string $job): void
-    {
-        $args = explode("::", $callback);
-        $sClass = $args[0];
-        $sMethod = $args[1];
-        // If this method exists, execute it
-        // FIXME: if the job doesn't exists log an error
-        if (ControllerRegistry::get($sClass) and
-                method_exists(ControllerRegistry::get($sClass), $sMethod)) {
-            ControllerRegistry::get($sClass)->$sMethod();
-        } else {
-            throw new BadMethodCallException(
-                "Callback method $callback for the job $job doesn't exist"
-            );
-        }
-    }
-
-    // Run a method every X minutes
-    public static function minutes(string $job, int $minutes, $callback): void
-    {
+    /**
+     * Run a method any X minutes
+     *
+     * @param string $job
+     * @param int $minutes
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function minutes(string $job, int $minutes, $callback): void {
         self::seconds(
             $job,
-            convertToSeconds($minutes, "minutes"),
+            ConvertToSeconds::convertToSeconds($minutes, TimeUnit::MINUTES),
             $callback
         );
     }
 
-    // Run a method every X hours
-    public static function hours(string $job, int $hours, $callback): void
-    {
+    /**
+     * Run a method any X hours
+     *
+     * @param string $job
+     * @param int $hours
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function hours(string $job, int $hours, $callback): void {
         self::seconds(
             $job,
-            convertToSeconds($hours, "hours"),
+            ConvertToSeconds::convertToSeconds($hours, TimeUnit::HOURS),
             $callback
         );
     }
 
-    // Run a method every X days
-    public static function days(string $job, int $hours, $callback): void
-    {
+    /**
+     * Run a method any X days
+     *
+     * @param string $job
+     * @param int $days
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function days(string $job, int $days, $callback): void {
         self::seconds(
             $job,
-            convertToSeconds($hours, "days"),
+            ConvertToSeconds::convertToSeconds($days, TimeUnit::DAYS),
             $callback
         );
     }
 
-    // Run a method every X weeks
-    public static function weeks(string $job, int $weeks, $callback): void
-    {
+    /**
+     * Run a method any X weeks
+     *
+     * @param string $job
+     * @param int $weeks
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function weeks(string $job, int $weeks, $callback): void {
         self::seconds(
             $job,
-            convertToSeconds($weeks, "weeks"),
+            ConvertToSeconds::convertToSeconds($weeks, TimeUnit::WEEKS),
             $callback
         );
     }
 
-    // Run a method every X months
-    public static function months(string $job, int $months, $callback): void
-    {
+    /**
+     * Run a method any X months
+     *
+     * @param string $job
+     * @param int $months
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function months(string $job, int $months, $callback): void {
         self::seconds(
             $job,
-            convertToSeconds($months, "months"),
+            ConvertToSeconds::convertToSeconds($months, TimeUnit::MONTHS),
             $callback
         );
     }
 
-    // Run a method every X years
-    public static function years(string $job, int $years, $callback): void
-    {
+    /**
+     * Run a method any X years
+     *
+     * @param string $job
+     * @param int $years
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function years(string $job, int $years, $callback): void {
         self::seconds(
             $job,
-            convertToSeconds($years, "years"),
+            ConvertToSeconds::convertToSeconds($years, TimeUnit::YEARS),
             $callback
         );
     }
 
-    public static function decades(string $job, int $decades, $callback): void
-    {
+    /**
+     * Run a method any X decades
+     *
+     * @param string $job
+     * @param int $decades
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function decades(string $job, int $decades, $callback): void {
         self::seconds(
             $job,
-            convertToSeconds($decades, "decades"),
+            ConvertToSeconds::convertToSeconds($decades, TimeUnit::DECADES),
             $callback
         );
     }
 
-    // returns the timestamp when did a job run the last time
-    // if not run yet return 0 (year 1970)
-    private static function getLastRun($name): int
-    {
-        $last_run = 0;
-
-        $query = Database::pQuery(
-            "select last_run from `{prefix}cronjobs` where name = ?",
-            [
-                            $name
-                        ],
-            true
-        );
-        if (Database::any($query)) {
-            $result = Database::fetchObject($query);
-            $last_run = intval($result->last_run);
-        }
-        return $last_run;
-    }
-
-    // update the last run date of a cronjob
-    public static function updateLastRun(string $name): void
-    {
+    /**
+     * update the last run date of a cronjob
+     *
+     * @param string $name
+     *
+     * @return void
+     */
+    public static function updateLastRun(string $name): void {
         // if this job exists update in database do an sql update else
         // an sql insert
-        $query = Database::selectAll("cronjobs", ["name"], "name = ?", [$name]);
+        $query = Database::selectAll('cronjobs', ['name'], 'name = ?', [$name]);
 
         $currentTime = is_numeric(self::$currentTime) ?
                 self::$currentTime : time();
@@ -196,15 +203,15 @@ class BetterCron extends MainClass
         $args = Database::any($query) ? [
             $currentTime,
             $name
-                ] : [
+        ] : [
             $name,
             $currentTime
         ];
 
         $sql = Database::any($query) ?
-                "update `{prefix}cronjobs` set last_run = ? where name = ?" :
-                "insert into `{prefix}cronjobs` (name, last_run) "
-                . "values(?, ?)";
+                'update `{prefix}cronjobs` set last_run = ? where name = ?' :
+                'insert into `{prefix}cronjobs` (name, last_run) '
+                . 'values(?, ?)';
 
         Database::pQuery(
             $sql,
@@ -213,56 +220,165 @@ class BetterCron extends MainClass
         );
     }
 
-    // get all cronjobs in database as array of
-    // name => timestamp
-    public static function getAllCronjobs(): array
-    {
-        $cronjobs = array();
+    /**
+     * Get all cronjobs in database as array of name => timestamp
+     *
+     * @return array<string, int>
+     */
+    public static function getAllCronjobs(): array {
+        $cronjobs = [];
         $query = Database::query(
-            "select name, last_run from `{prefix}cronjobs` "
-                        . "order by name",
+            'select name, last_run from `{prefix}cronjobs` '
+                        . 'order by name',
             true
         );
         while ($row = Database::fetchObject($query)) {
-            $cronjobs[$row->name] = intval($row->last_run);
+            $cronjobs[(string)$row->name] = (int)($row->last_run);
         }
         return $cronjobs;
     }
 
-    // Settins page
-    public function settings(): string
-    {
-        return Template::executeModuleTemplate("better_cron", "list.php");
+    /**
+     * Render settings page html
+     *
+     * @return string
+     */
+    public function settings(): string {
+        return Template::executeModuleTemplate('better_cron', 'list.php');
     }
 
-    // As the method name says translates the headline for the module's settings
-    // page
-    public function getSettingsHeadline(): string
-    {
-        return get_translation("cronjobs");
+    /**
+     * Get headline for admin settings page
+     *
+     * @return string
+     */
+    public function getSettingsHeadline(): string {
+        return get_translation('cronjobs');
     }
 
-    // before uninstall rollback migrations (Drop cronjobs Table)
-    public function uninstall(): void
-    {
+    /**
+     * Before uninstall drop better_cron table
+     *
+     * @return void
+     */
+    public function uninstall(): void {
         $migrator = new DBMigrator(
-            "package/better_cron",
-            ModuleHelper::buildRessourcePath("better_cron", "sql/down")
+            'package/better_cron',
+            ModuleHelper::buildRessourcePath('better_cron', 'sql/down')
         );
         $migrator->rollback();
     }
 
-    public function testCallback()
-    {
-        if (isCLI()) {
-            echo "foo";
+    /**
+     * Callback for unit tests
+     *
+     * @return void
+     */
+    public function testCallback(): void {
+        if (is_cli()) {
+            echo 'foo';
         }
     }
 
-    public function registerCronjobs()
-    {
-        if (isCLI()) {
-            idefine("CRONJOBS_REGISTERED", true);
+    /**
+     * Register cronjobs
+     * Only used for unit tests
+     *
+     * @return void
+     */
+    public function registerCronjobs(): void {
+        if (is_cli()) {
+            defined('CRONJOBS_REGISTERED') || define('CRONJOBS_REGISTERED', true);
         }
+    }
+
+    /**
+     * Execute string callback
+     *
+     * @param string $callback
+     * @param mixed $job
+     *
+     * @return void
+     */
+    protected static function executeStringCallback(string $callback, mixed $job): void {
+        // Callback can be a controller method name as string
+        // e.g. MyController::myMethod
+        if (str_contains($callback, '::')) {
+            self::executeControllerCallback($callback, $job);
+        } else {
+            // if $callback is a string without ::
+            // then it is a normal (non controller) method name
+            self::executeCallbackFunction($callback, $job);
+        }
+    }
+
+    /**
+     * Execute callback function
+     *
+     * @param string $callback
+     * @param string $job
+     *
+     * @return  void
+     */
+    protected static function executeCallbackFunction(string $callback, string $job): void {
+        if (function_exists($callback)) {
+            // update last run for this job before running it
+            // to prevent running the job multiple at the same time
+            self::updateLastRun($job);
+            call_user_func($callback);
+        } else {
+            throw new BadMethodCallException(
+                "Callback method {$callback} for the job {$job} doesn't exist"
+            );
+        }
+    }
+
+    /**
+     * parse a string in the format MyController::myMethod and call
+     * a controller action (if it exists)
+     *
+     * @param string $callback
+     * @param string $job
+     *
+     * @return void     *
+     */
+    protected static function executeControllerCallback(string $callback, string $job): void {
+        $args = explode('::', $callback);
+        $sClass = $args[0];
+        $sMethod = $args[1];
+        // If this method exists, execute it
+        // FIXME: if the job doesn't exists log an error
+        if (ControllerRegistry::get($sClass) &&
+                method_exists(ControllerRegistry::get($sClass), $sMethod)) {
+            ControllerRegistry::get($sClass)->{$sMethod}();
+        } else {
+            throw new BadMethodCallException(
+                "Callback method {$callback} for the job {$job} doesn't exist"
+            );
+        }
+    }
+
+    /**
+     * Get last run time of a cronjob
+     *
+     * @param string $name
+     *
+     * @return int
+     */
+    private static function getLastRun(string $name): int {
+        $last_run = 0;
+
+        $query = Database::pQuery(
+            'select last_run from `{prefix}cronjobs` where name = ?',
+            [
+                $name
+            ],
+            true
+        );
+        if (Database::any($query)) {
+            $result = Database::fetchObject($query);
+            $last_run = (int)($result->last_run);
+        }
+        return $last_run;
     }
 }
