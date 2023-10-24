@@ -10,8 +10,10 @@ use content\modules\convert_to_seconds\ConvertToSeconds;
 use content\modules\convert_to_seconds\TimeUnit;
 use PHPUnit\Framework\TestCase;
 
-class BetterCronTest extends TestCase {
-    protected function setUp(): void {
+class BetterCronTest extends TestCase
+{
+    protected function setUp(): void
+    {
         $migrator = new DBMigrator(
             'package/better_cron',
             ModuleHelper::buildRessourcePath('better_cron', 'sql/up')
@@ -19,7 +21,8 @@ class BetterCronTest extends TestCase {
         $migrator->migrate();
     }
 
-    protected function tearDown(): void {
+    protected function tearDown(): void
+    {
         $migrator = new DBMigrator(
             'package/better_cron',
             ModuleHelper::buildRessourcePath('better_cron', 'sql/down')
@@ -27,11 +30,13 @@ class BetterCronTest extends TestCase {
         $migrator->rollback();
     }
 
-    public function testTableExists(): void {
+    public function testTableExists(): void
+    {
         $this->assertTrue(Database::tableExists('cronjobs'));
     }
 
-    public function testAfterHTML(): void {
+    public function testAfterHTML(): void
+    {
         $this->assertFalse(defined('CRONJOBS_REGISTERED'));
 
         $controller = new BetterCron();
@@ -40,39 +45,48 @@ class BetterCronTest extends TestCase {
         $this->assertTrue(defined('CRONJOBS_REGISTERED'));
     }
 
-    public function testSeconds(): void {
+    public function testSeconds(): void
+    {
         $this->doTest(TimeUnit::SECONDS);
     }
 
-    public function testMinutes(): void {
+    public function testMinutes(): void
+    {
         $this->doTest(TimeUnit::MINUTES);
     }
 
-    public function testHours(): void {
+    public function testHours(): void
+    {
         $this->doTest(TimeUnit::HOURS);
     }
 
-    public function testDays(): void {
+    public function testDays(): void
+    {
         $this->doTest(TimeUnit::DAYS);
     }
 
-    public function testWeeks(): void {
+    public function testWeeks(): void
+    {
         $this->doTest(TimeUnit::WEEKS);
     }
 
-    public function testMonths(): void {
+    public function testMonths(): void
+    {
         $this->doTest(TimeUnit::MONTHS);
     }
 
-    public function testYears(): void {
+    public function testYears(): void
+    {
         $this->doTest(TimeUnit::YEARS);
     }
 
-    public function testDecades(): void {
+    public function testDecades(): void
+    {
         $this->doTest(TimeUnit::DECADES);
     }
 
-    public function testWithControllerCallback(): void {
+    public function testWithControllerCallback(): void
+    {
         $testIdentifier = 'phpunit/' . uniqid();
 
         ob_start();
@@ -84,7 +98,8 @@ class BetterCronTest extends TestCase {
         $this->assertEquals('foo', ob_get_clean());
     }
 
-    public function testWithGlobalMethod(): void {
+    public function testWithGlobalMethod(): void
+    {
         $testIdentifier = 'phpunit/' . uniqid();
         ob_start();
         $this->callBetterCron(
@@ -96,7 +111,8 @@ class BetterCronTest extends TestCase {
         $this->assertGreaterThanOrEqual(2020, (int)(ob_get_clean()));
     }
 
-    public function testWithNonExistingControllerMethodThrowsException(): void {
+    public function testWithNonExistingControllerMethodThrowsException(): void
+    {
         $testIdentifier = 'phpunit/' . uniqid();
         $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage(
@@ -110,7 +126,8 @@ class BetterCronTest extends TestCase {
         );
     }
 
-    public function testWithNonExistingMethodThrowsException(): void {
+    public function testWithNonExistingMethodThrowsException(): void
+    {
         $testIdentifier = 'phpunit/' . uniqid();
 
         $this->expectException(BadMethodCallException::class);
@@ -125,7 +142,8 @@ class BetterCronTest extends TestCase {
         );
     }
 
-    public function testWithNotCallableArgumentThrowsException(): void {
+    public function testWithNotCallableArgumentThrowsException(): void
+    {
         $testIdentifier = 'phpunit/' . uniqid();
 
         $this->expectException(BadMethodCallException::class);
@@ -154,7 +172,8 @@ class BetterCronTest extends TestCase {
         );
     }
 
-    public function testGetSettingsHeadline(): void {
+    public function testGetSettingsHeadline(): void
+    {
         $controller = new BetterCron();
         $this->assertEqualsIgnoringCase(
             'cronjobs',
@@ -162,11 +181,12 @@ class BetterCronTest extends TestCase {
         );
     }
 
-    public function testGetSettings(): void {
+    public function testGetSettings(): void
+    {
         BetterCron::$currentTime = ConvertToSeconds::convertToSeconds(4, TimeUnit::DECADES);
-        BetterCron::seconds('phpunit/foo', 1, static function() {
+        BetterCron::seconds('phpunit/foo', 1, static function () {
         });
-        BetterCron::seconds('phpunit/bar', 1, static function() {
+        BetterCron::seconds('phpunit/bar', 1, static function () {
         });
         $controller = new BetterCron();
         $settingsPage = $controller->settings();
@@ -175,7 +195,8 @@ class BetterCronTest extends TestCase {
         $this->assertStringContainsString('phpunit/bar', $settingsPage);
     }
 
-    public function testUninstall(): void {
+    public function testUninstall(): void
+    {
         $this->assertTrue(Database::tableExists('cronjobs'));
 
         $controller = new BetterCron();
@@ -184,15 +205,18 @@ class BetterCronTest extends TestCase {
         $this->assertFalse(Database::tableExists('cronjobs'));
     }
 
-    protected function updateCurrentTime(int $time): void {
+    protected function updateCurrentTime(int $time): void
+    {
         BetterCron::$currentTime = $time;
     }
 
-    protected function addToCurrentTime(int $time): void {
+    protected function addToCurrentTime(int $time): void
+    {
         BetterCron::$currentTime += $time;
     }
 
-    protected function doTest(TimeUnit $unit): void {
+    protected function doTest(TimeUnit $unit): void
+    {
         $testIdentifier = 'phpunit/' . uniqid();
 
         $this->updateCurrentTime(0);
@@ -204,7 +228,7 @@ class BetterCronTest extends TestCase {
         );
 
         ob_start();
-        $this->callBetterCron($testIdentifier, $unit, static function() {
+        $this->callBetterCron($testIdentifier, $unit, static function () {
             echo 'foo1';
         });
 
@@ -218,7 +242,7 @@ class BetterCronTest extends TestCase {
         );
 
         ob_start();
-        $this->callBetterCron($testIdentifier, $unit, static function() {
+        $this->callBetterCron($testIdentifier, $unit, static function () {
             echo 'foo2';
         });
 
@@ -235,7 +259,7 @@ class BetterCronTest extends TestCase {
         );
 
         ob_start();
-        $this->callBetterCron($testIdentifier, $unit, static function() {
+        $this->callBetterCron($testIdentifier, $unit, static function () {
             echo 'foo3';
         });
         $this->assertEquals('foo3', ob_get_clean());

@@ -13,7 +13,8 @@ use content\modules\convert_to_seconds\TimeUnit;
 /**
  * Provides utils to execute methods in an interval
  */
-class BetterCron extends MainClass {
+class BetterCron extends MainClass
+{
     public static ?int $currentTime = null;
 
     /**
@@ -21,7 +22,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public function afterHtml(): void {
+    public function afterHtml(): void
+    {
         do_event('register_cronjobs');
     }
 
@@ -34,7 +36,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public static function seconds(string $job, int $seconds, mixed $callback): void {
+    public static function seconds(string $job, int $seconds, mixed $callback): void
+    {
         if (! is_string($callback) && ! is_callable($callback)) {
             throw new BadMethodCallException(
                 "Callback of job {$job} is not callable"
@@ -75,7 +78,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public static function minutes(string $job, int $minutes, $callback): void {
+    public static function minutes(string $job, int $minutes, $callback): void
+    {
         self::seconds(
             $job,
             ConvertToSeconds::convertToSeconds($minutes, TimeUnit::MINUTES),
@@ -92,7 +96,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public static function hours(string $job, int $hours, $callback): void {
+    public static function hours(string $job, int $hours, $callback): void
+    {
         self::seconds(
             $job,
             ConvertToSeconds::convertToSeconds($hours, TimeUnit::HOURS),
@@ -109,7 +114,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public static function days(string $job, int $days, $callback): void {
+    public static function days(string $job, int $days, $callback): void
+    {
         self::seconds(
             $job,
             ConvertToSeconds::convertToSeconds($days, TimeUnit::DAYS),
@@ -126,7 +132,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public static function weeks(string $job, int $weeks, $callback): void {
+    public static function weeks(string $job, int $weeks, $callback): void
+    {
         self::seconds(
             $job,
             ConvertToSeconds::convertToSeconds($weeks, TimeUnit::WEEKS),
@@ -143,7 +150,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public static function months(string $job, int $months, $callback): void {
+    public static function months(string $job, int $months, $callback): void
+    {
         self::seconds(
             $job,
             ConvertToSeconds::convertToSeconds($months, TimeUnit::MONTHS),
@@ -160,7 +168,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public static function years(string $job, int $years, $callback): void {
+    public static function years(string $job, int $years, $callback): void
+    {
         self::seconds(
             $job,
             ConvertToSeconds::convertToSeconds($years, TimeUnit::YEARS),
@@ -177,7 +186,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public static function decades(string $job, int $decades, $callback): void {
+    public static function decades(string $job, int $decades, $callback): void
+    {
         self::seconds(
             $job,
             ConvertToSeconds::convertToSeconds($decades, TimeUnit::DECADES),
@@ -192,7 +202,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public static function updateLastRun(string $name): void {
+    public static function updateLastRun(string $name): void
+    {
         // if this job exists update in database do an sql update else
         // an sql insert
         $query = Database::selectAll('cronjobs', ['name'], 'name = ?', [$name]);
@@ -225,7 +236,8 @@ class BetterCron extends MainClass {
      *
      * @return array<string, int>
      */
-    public static function getAllCronjobs(): array {
+    public static function getAllCronjobs(): array
+    {
         $cronjobs = [];
         $query = Database::query(
             'select name, last_run from `{prefix}cronjobs` '
@@ -243,7 +255,8 @@ class BetterCron extends MainClass {
      *
      * @return string
      */
-    public function settings(): string {
+    public function settings(): string
+    {
         return Template::executeModuleTemplate('better_cron', 'list.php');
     }
 
@@ -252,7 +265,8 @@ class BetterCron extends MainClass {
      *
      * @return string
      */
-    public function getSettingsHeadline(): string {
+    public function getSettingsHeadline(): string
+    {
         return get_translation('cronjobs');
     }
 
@@ -261,7 +275,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public function uninstall(): void {
+    public function uninstall(): void
+    {
         $migrator = new DBMigrator(
             'package/better_cron',
             ModuleHelper::buildRessourcePath('better_cron', 'sql/down')
@@ -274,7 +289,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public function testCallback(): void {
+    public function testCallback(): void
+    {
         if (is_cli()) {
             echo 'foo';
         }
@@ -286,7 +302,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    public function registerCronjobs(): void {
+    public function registerCronjobs(): void
+    {
         if (is_cli()) {
             defined('CRONJOBS_REGISTERED') || define('CRONJOBS_REGISTERED', true);
         }
@@ -300,7 +317,8 @@ class BetterCron extends MainClass {
      *
      * @return void
      */
-    protected static function executeStringCallback(string $callback, mixed $job): void {
+    protected static function executeStringCallback(string $callback, mixed $job): void
+    {
         // Callback can be a controller method name as string
         // e.g. MyController::myMethod
         if (str_contains($callback, '::')) {
@@ -320,7 +338,8 @@ class BetterCron extends MainClass {
      *
      * @return  void
      */
-    protected static function executeCallbackFunction(string $callback, string $job): void {
+    protected static function executeCallbackFunction(string $callback, string $job): void
+    {
         if (function_exists($callback)) {
             // update last run for this job before running it
             // to prevent running the job multiple at the same time
@@ -342,7 +361,8 @@ class BetterCron extends MainClass {
      *
      * @return void     *
      */
-    protected static function executeControllerCallback(string $callback, string $job): void {
+    protected static function executeControllerCallback(string $callback, string $job): void
+    {
         $args = explode('::', $callback);
         $sClass = $args[0];
         $sMethod = $args[1];
@@ -365,7 +385,8 @@ class BetterCron extends MainClass {
      *
      * @return int
      */
-    private static function getLastRun(string $name): int {
+    private static function getLastRun(string $name): int
+    {
         $last_run = 0;
 
         $query = Database::pQuery(
